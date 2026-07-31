@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FICC & 저축은행 데이터 대시보드 Mockup</title>
+    <!-- 구글 폰트 적용 (모던한 느낌의 Outfit) -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js 라이브러리 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* 세련된 다크 테마 색상 팔레트 */
+            --bg-color: #0f172a;
+            --sidebar-bg: #1e293b;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-hover: #2563eb;
+            --border-color: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 사이드바 영역 */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-icon {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.875rem 1.25rem;
+            border-radius: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--accent-primary);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background-color: var(--accent-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        /* 메인 콘텐츠 영역 */
+        .main-content {
+            margin-left: 280px;
+            padding: 3rem;
+            width: calc(100% - 280px);
+        }
+
+        .header {
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* 대시보드 카드 레이아웃 (Glassmorphism 적용) */
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            padding: 2rem;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 1rem;
+        }
+
+        /* 테이블 스타일 */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.02);
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+            color: #e2e8f0;
+            transition: background-color 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 상태 뱃지 (마이크로 디자인) */
+        .badge {
+            padding: 0.35rem 0.85rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-bank { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-card { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .badge-capital { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        /* 차트 그리드 */
+        .chart-container {
+            height: 350px;
+            width: 100%;
+            position: relative;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        /* 반응형 */
+        @media (max-width: 1024px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-icon">📊</span> FICC Dashboard
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item active">📈 채권 발행 내역</div>
+            <div class="nav-item">📉 채권 만기 내역</div>
+            <div class="nav-item">🏦 저축은행 여수신 동향</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <h1>FICC 채권 수급 및 저축은행 자금동향</h1>
+            <p>공공데이터포털 및 한국은행 ECOS API 기반 통합 데이터</p>
+        </header>
+
+        <div class="dashboard-container">
+            <!-- 테이블 섹션 (Mock Data) -->
+            <div class="card">
+                <div class="card-title">
+                    <span>📑</span> 최근 채권 발행 내역 (fact_bond_issuance)
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>발행일자</th>
+                                <th>발행인명</th>
+                                <th>채권분류</th>
+                                <th>발행금액 (원)</th>
+                                <th>표면금리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2026-07-28</td>
+                                <td>신한은행</td>
+                                <td><span class="badge badge-bank">시중은행채</span></td>
+                                <td>500,000,000,000</td>
+                                <td>3.45%</td>
+                            </tr>
+                            <tr>
+                                <td>2026-07-29</td>
+                                <td>A카드</td>
+                                <td><span class="badge badge-card">카드채</span></td>
+                                <td>200,000,000,000</td>
+                                <td>4.12%</td>
+                            </tr>
+                            <tr>
+                                <td>2026-07-30</td>
+                                <td>B캐피탈</td>
+                                <td><span class="badge badge-capital">캐피탈채</span></td>
+                                <td>150,000,000,000</td>
+                                <td>4.55%</td>
+                            </tr>
+                            <tr>
+                                <td>2026-07-31</td>
+                                <td>국민은행</td>
+                                <td><span class="badge badge-bank">시중은행채</span></td>
+                                <td>700,000,000,000</td>
+                                <td>3.40%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 차트 섹션 (Mock Data) -->
+            <div class="grid">
+                <div class="card">
+                    <div class="card-title">
+                        <span>📊</span> 채권 분류별 발행 규모 요약
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">
+                        <span>🏦</span> 월별 저축은행 여신 및 수신 잔액 추이
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Chart.js 기본 폰트 설정
+        Chart.defaults.font.family = "'Outfit', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+
+        // 1. Bar Chart (발행 규모)
+        const ctxBar = document.getElementById('barChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: ['시중은행채', '카드채', '캐피탈채', '특수은행채'],
+                datasets: [{
+                    label: '발행 규모 (단위: 억 원)',
+                    data: [12000, 4500, 3200, 8500],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(168, 85, 247, 0.85)',
+                        'rgba(16, 185, 129, 0.85)',
+                        'rgba(245, 158, 11, 0.85)'
+                    ],
+                    borderRadius: 8,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 14 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                    }
+                }
+            }
+        });
+
+        // 2. Line Chart (여수신 잔액)
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        
+        // 화려한 그라데이션 영역 생성
+        let gradientDeposit = ctxLine.createLinearGradient(0, 0, 0, 350);
+        gradientDeposit.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+        gradientDeposit.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+        
+        let gradientLoan = ctxLine.createLinearGradient(0, 0, 0, 350);
+        gradientLoan.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+        gradientLoan.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'],
+                datasets: [
+                    {
+                        label: '수신 잔액 (Deposit)',
+                        data: [1500, 1550, 1620, 1600, 1680, 1750],
+                        borderColor: '#3b82f6',
+                        backgroundColor: gradientDeposit,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#0f172a',
+                        pointBorderColor: '#3b82f6',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.4, // 곡선 스무딩
+                        fill: true
+                    },
+                    {
+                        label: '여신 잔액 (Loan)',
+                        data: [1300, 1320, 1350, 1400, 1450, 1480],
+                        borderColor: '#10b981',
+                        backgroundColor: gradientLoan,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#0f172a',
+                        pointBorderColor: '#10b981',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { usePointStyle: true, boxWidth: 8 }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+    </script>
+</body>
+</html>
