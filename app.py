@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import create_engine
 import os
+import io
 from datetime import datetime, date
 from dotenv import load_dotenv
 
@@ -30,7 +31,7 @@ st.sidebar.header("데이터 탐색 및 조건 설정")
 page = st.sidebar.radio("메뉴 선택", ["채권 만기 내역 (기간/금액별)", "채권 발행 내역", "저축은행 여수신 동향"])
 
 # ---------------------------------------------------------
-# 1. 채권 만기 내역 페이지 (기간 및 금액별 필터링 기능 강화)
+# 1. 채권 만기 내역 페이지 (기간/금액별 필터링 및 엑셀 다운로드)
 # ---------------------------------------------------------
 if page == "채권 만기 내역 (기간/금액별)":
     st.subheader("📉 기간별 채권 만기도래 내역 분석")
@@ -76,6 +77,7 @@ if page == "채권 만기 내역 (기간/금액별)":
             ]
         else:
             filtered_df = df_maturity.copy()
+            start_d, end_d = default_start, default_end
             
         # 카테고리 필터링 적용
         if selected_category != "전체":
@@ -97,6 +99,20 @@ if page == "채권 만기 내역 (기간/금액별)":
         col3.metric("조회 설정 기간", f"{start_d} ~ {end_d}")
         
         st.markdown("### 📋 만기도래 상세 리스트 (금액/기간 필터 적용)")
+        
+        # 📥 엑셀 다운로드 버튼 (현재 필터링된 내역 기반)
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            filtered_df.to_excel(writer, sheet_name='만기도래내역_필터링', index=False)
+        buffer.seek(0)
+        
+        st.download_button(
+            label=f"📥 [{start_d} ~ {end_d}] 필터링된 엑셀 파일 다운로드 (.xlsx)",
+            data=buffer,
+            file_name=f"bond_maturity_filtered_{start_d}_to_{end_d}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        
         st.dataframe(
             filtered_df.style.format({'maturity_amount': '{:,.0f}'}),
             use_container_width=True
@@ -120,6 +136,19 @@ elif page == "채권 발행 내역":
         df_issuance['issue_date'] = pd.to_datetime(df_issuance['issue_date']).dt.date
         df_issuance['issue_amount'] = pd.to_numeric(df_issuance['issue_amount'], errors='coerce')
         
+        # 📥 전체 발행 내역 엑셀 다운로드
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            df_issuance.to_excel(writer, sheet_name='채권발행내역', index=False)
+        buffer.seek(0)
+        
+        st.download_button(
+            label="📥 채권 발행 내역 엑셀 다운로드 (.xlsx)",
+            data=buffer,
+            file_name="bond_issuance.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        
         st.dataframe(df_issuance.style.format({'issue_amount': '{:,.0f}'}), use_container_width=True)
         
         st.markdown("### 채권 분류별 발행 규모 요약")
@@ -137,6 +166,20 @@ elif page == "저축은행 여수신 동향":
     
     if not df_savings.empty:
         df_savings = df_savings.sort_values(by='base_month')
+        
+        # 📥 저축은행 여수신 엑셀 다운로드
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            df_savings.to_excel(writer, sheet_name='저축은행여수신', index=False)
+        buffer.seek(0)
+        
+        st.download_button(
+            label="📥 저축은행 여수신 엑셀 다운로드 (.xlsx)",
+            data=buffer,
+            file_name="savings_bank_fund.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        
         st.dataframe(df_savings, use_container_width=True)
         
         st.markdown("### 월별 여신 및 수신 잔액 추이")
